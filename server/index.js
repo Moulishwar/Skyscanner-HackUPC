@@ -47,7 +47,9 @@ mongoose.connection.on('disconnected', () => {
 
 // Import routes
 const validateAirportRoutes = require('./routes/validateAirport');
+const groupRoutes = require('./routes/group');
 app.use('/api', validateAirportRoutes);
+app.use('/api/group', groupRoutes);
 
 // Skyscanner API route
 app.get('/api/airports', async (req, res) => {
