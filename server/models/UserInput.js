@@ -33,8 +33,9 @@ const userInputSchema = new mongoose.Schema({
     groupCode: {
         type: String,
         required: [true, 'Group code is required'],
-        unique: true,
-        trim: true
+        trim: true,
+        index: true,
+        unique: false
     },
     createdAt: {
         type: Date,

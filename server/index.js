@@ -80,21 +80,48 @@ app.get('/api/airports', async (req, res) => {
 // Group code generation
 const generatedCodes = new Set();
 
-function generateUniqueCode() {
+async function generateUniqueCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let code;
-  do {
-    code = Array.from({ length: 8 }, () =>
+  const UserInput = require('./models/UserInput');
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  while (attempts < maxAttempts) {
+    const code = Array.from({ length: 8 }, () =>
       chars.charAt(Math.floor(Math.random() * chars.length))
     ).join('');
-  } while (generatedCodes.has(code));
-  generatedCodes.add(code);
-  return code;
+
+    try {
+      // Check if code exists in MongoDB
+      const existingCode = await UserInput.findOne({ groupCode: code });
+      
+      if (!existingCode && !generatedCodes.has(code)) {
+        generatedCodes.add(code);
+        return code;
+      }
+    } catch (err) {
+      console.error('Error checking code uniqueness:', err);
+      // If there's an error checking MongoDB, fall back to local Set only
+      if (!generatedCodes.has(code)) {
+        generatedCodes.add(code);
+        return code;
+      }
+    }
+    
+    attempts++;
+  }
+
+  throw new Error('Failed to generate a unique code after multiple attempts');
 }
 
-app.get('/api/generate-group-code', (req, res) => {
-  const code = generateUniqueCode();
-  res.json({ code });
+app.get('/api/generate-group-code', async (req, res) => {
+  try {
+    const code = await generateUniqueCode();
+    res.json({ code });
+  } catch (error) {
+    console.error('Error generating group code:', error);
+    res.status(500).json({ error: 'Failed to generate group code' });
+  }
 });
 
 // Form submission route
