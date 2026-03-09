@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Group Trip — Skyscanner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Shared header/footer styles (mirrors index.html) ───────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; }
+    :root {
+      --blue: #0770e3; --blue-dark: #084eb5;
+      --navy: #05203c; --yellow: #FFB700;
+      --gray-200: #e6e8f0; --gray-600: #444e5e;
+      --white: #fff;
+    }
+    .sky-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .sky-nav {
+      max-width: 1280px; margin: 0 auto;
+      padding: 0 20px; height: 56px;
+      display: flex; align-items: center;
+    }
+    .sky-logo { display: flex; align-items: center; margin-right: 16px; flex-shrink: 0; }
+    .sky-logo img { height: 38px; width: auto; border-radius: 6px; }
+    .sky-nav-links {
+      display: flex; list-style: none; flex: 1;
+    }
+    .sky-nav-links li a {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 14px; height: 56px;
+      font-size: 0.875rem; font-weight: 500;
+      color: var(--gray-600);
+      border-bottom: 3px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .sky-nav-links li a:hover { color: var(--blue); }
+    .sky-nav-links li a.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+    .sky-nav-links li a.nav-new { color: var(--blue); font-weight: 600; position: relative; }
+    .sky-nav-links li a.nav-new::after {
+      content: 'NEW'; font-size: 0.52rem; font-weight: 800;
+      letter-spacing: 0.06em; background: #ff5a1f; color: white;
+      padding: 1px 5px; border-radius: 4px;
+      position: absolute; top: 8px; right: 2px;
+    }
+    .sky-nav-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .btn-login {
+      padding: 8px 16px; border-radius: 20px; font-size: 0.875rem; font-weight: 600;
+      border: 2px solid var(--gray-200); background: transparent; color: var(--gray-600);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-login:hover { border-color: var(--blue); color: var(--blue); }
+    .btn-group-trip {
+      padding: 9px 18px; border-radius: 20px; font-size: 0.875rem; font-weight: 700;
+      border: none; background: var(--blue); color: white;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .btn-group-trip:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    /* ── Footer ───────────────────────────────────────────────────── */
+    .sky-footer {
+      background: var(--navy); color: rgba(255,255,255,0.5);
+      padding: 40px 20px; text-align: center; font-size: 0.8rem;
+    }
+    .sky-footer a { color: rgba(255,255,255,0.5); margin: 0 8px; }
+    .sky-footer a:hover { color: white; }
+    .footer-links { margin-bottom: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 0; }
+    @media (max-width: 768px) { .sky-nav-links { display: none; } }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<header class="sky-header">
+  <nav class="sky-nav">
+    <a href="/" class="sky-logo">
+      <img src="Logo.png" alt="Skyscanner" />
+    </a>
+    <ul class="sky-nav-links">
+      <li><a href="/">Flights</a></li>
+      <li><a href="#">Hotels</a></li>
+      <li><a href="#">Car hire</a></li>
+      <li><a href="#">More</a></li>
+      <li><a href="/group-trip" class="nav-new active">Group Trip</a></li>
+    </ul>
+    <div class="sky-nav-right" id="navRight">
+      <button class="btn-login" onclick="openLoginModal()">Log in</button>
+      <button class="btn-group-trip" onclick="startBattle()">⚔️ Start Battle</button>
+    </div>
+  </nav>
+</header>
+
+<!-- ── Hero ────────────────────────────────────────────────────────────── -->
+<section class="group-hero">
+  <div class="group-hero-content">
+    <div class="group-badge">
+      <span>⚔️</span>
+      <span>Powered by Real Flight Data + AI</span>
+    </div>
+
+    <h1>Plan Trips With Friends —<br /><span>The Fun Way</span></h1>
+
+    <p>
+      Stop arguing in WhatsApp group chats. Propose your dream destinations,
+      let real flight prices do the talking, and have AI crown the ultimate winner.
+      May the best trip win.
+    </p>
+
+    <!-- How it works -->
+    <div class="how-it-works">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <div class="how-icon">🧑‍🤝‍🧑</div>
+        <p>Friends join the same battle room</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <div class="how-icon">✈️</div>
+        <p>Each person proposes a destination</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <div class="how-icon">💰</div>
+        <p>Real flight prices are fetched live</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <div class="how-icon">🤖</div>
+        <p>AI judge evaluates and picks a winner</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">5</div>
+        <div class="how-icon">🏆</div>
+        <p>Score tracked on the leaderboard</p>
+      </div>
+    </div>
+
+    <button class="btn btn-lg btn-orange" onclick="startBattle()">
+      ⚔️ Start Group Trip
+    </button>
+
+    <p style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-top:16px">
+      No account needed beyond a username · Free to play
+    </p>
+  </div>
+</section>
+
+<!-- ── Features ────────────────────────────────────────────────────────── -->
+<section style="background:var(--gray-50);padding:64px 24px">
+  <div style="max-width:960px;margin:0 auto">
+    <h2 class="section-title text-center" style="margin-bottom:8px">Battle Modes</h2>
+    <p class="section-sub text-center">Choose your weapon.</p>
+    <div class="cards-grid" style="margin-top:32px">
+      <div class="card">
+        <span class="card-icon">⚔️</span>
+        <div class="card-title">Argument Mode</div>
+        <div class="card-desc">
+          Users propose destinations and argue. Type
+          <code style="font-size:0.75rem;background:var(--gray-100);padding:2px 6px;border-radius:4px">/battle Paris vs Tokyo</code>
+          to trigger the AI judge instantly.
+        </div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🎯</span>
+        <div class="card-title">Challenge Mode</div>
+        <div class="card-desc">
+          AI generates surprise challenges every few minutes. "Find a destination under £200" — who can find it first?
+        </div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🎭</span>
+        <div class="card-title">Travel Personalities</div>
+        <div class="card-desc">
+          On joining, AI assigns you a personality — Budget Pirate, Luxury Escapist, Backpacking Goblin — shaping the judge's commentary.
+        </div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🏆</span>
+        <div class="card-title">Leaderboard</div>
+        <div class="card-desc">
+          Every AI verdict awards a point. Climb the rankings across battles to become the ultimate travel champion.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Command guide ────────────────────────────────────────────────────── -->
+<section style="padding:64px 24px;max-width:960px;margin:0 auto">
+  <h2 class="section-title">How to use the chat</h2>
+  <p class="section-sub">Commands you can use in the TravelBattle room:</p>
+  <div style="display:flex;flex-direction:column;gap:16px;margin-top:8px">
+    <div class="cmd-row">
+      <code class="cmd-code">/battle Paris vs Tokyo vs Barcelona</code>
+      <span class="cmd-desc">Trigger an AI battle between any number of destinations</span>
+    </div>
+    <div class="cmd-row">
+      <code class="cmd-code">/suggest weekend getaways</code>
+      <span class="cmd-desc">Ask AI to suggest destinations based on your prompt</span>
+    </div>
+    <div class="cmd-row">
+      <span class="cmd-code" style="background:#e8f5e9;color:#1b5e20">Just chat normally!</span>
+      <span class="cmd-desc">Mention budget, mood, weather — AI adds fun commentary</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ─────────────────────────────────────────────────────────────── -->
+<section style="background:var(--sky-navy);padding:80px 24px;text-align:center">
+  <h2 style="color:white;font-size:2rem;font-weight:900;margin-bottom:16px">Ready to settle the debate?</h2>
+  <p style="color:rgba(255,255,255,0.6);margin-bottom:36px;font-size:1.05rem">Open two browser tabs, log in as different users, and let the battle begin.</p>
+  <button class="btn btn-lg btn-orange" onclick="startBattle()">
+    ⚔️ Start Group Trip
+  </button>
+</section>
+
+<footer class="sky-footer">
+  <div class="footer-links">
+    <a href="#">About</a><a href="#">Jobs</a><a href="#">Press</a>
+    <a href="#">Advertise</a><a href="#">Privacy</a><a href="#">Terms</a>
+    <a href="/group-trip">Group Trip</a>
+  </div>
+  <p>© 2025 Skyscanner Ltd · TravelBattle is a <strong style="color:rgba(255,255,255,0.7)">HackUPC 2025</strong> prototype</p>
+</footer>
+
+<style>
+.cmd-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cmd-code {
+  background: var(--sky-navy);
+  color: var(--sky-yellow);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cmd-desc {
+  color: var(--gray-700);
+  font-size: 0.9rem;
+}
+</style>
+
+<!-- ── Login Modal ─────────────────────────────────────────────────────── -->
+<div id="loginModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(5,32,60,0.55);backdrop-filter:blur(3px);align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,0.25);position:relative;margin:16px">
+    <button onclick="closeLoginModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;color:#9aa7ba;cursor:pointer">✕</button>
+    <div style="text-align:center;margin-bottom:24px">
+      <img src="Logo.png" alt="Skyscanner" style="height:36px;border-radius:6px;margin-bottom:12px" />
+      <div style="font-size:1.1rem;font-weight:800;color:#05203c">Sign in to Skyscanner</div>
+      <div style="font-size:0.82rem;color:#9aa7ba;margin-top:4px">Join the Group Trip arena</div>
+    </div>
+    <div id="modalError" style="display:none;background:#fee2e2;color:#b91c1c;padding:10px 14px;border-radius:8px;font-size:0.85rem;margin-bottom:16px"></div>
+    <form onsubmit="handleModalLogin(event)">
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:0.8rem;font-weight:600;color:#444e5e;margin-bottom:6px">Username</label>
+        <input id="modalUsername" type="text" placeholder="alice or bob" autocomplete="username"
+          style="width:100%;padding:10px 14px;border:1.5px solid #e6e8f0;border-radius:8px;font-size:0.9rem;outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderColor='#0770e3'" onblur="this.style.borderColor='#e6e8f0'" required />
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:0.8rem;font-weight:600;color:#444e5e;margin-bottom:6px">Password</label>
+        <input id="modalPassword" type="password" placeholder="password" autocomplete="current-password"
+          style="width:100%;padding:10px 14px;border:1.5px solid #e6e8f0;border-radius:8px;font-size:0.9rem;outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderColor='#0770e3'" onblur="this.style.borderColor='#e6e8f0'" required />
+      </div>
+      <button id="modalLoginBtn" type="submit"
+        style="width:100%;padding:12px;background:#0770e3;color:white;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;transition:background 0.15s"
+        onmouseover="this.style.background='#084eb5'" onmouseout="this.style.background='#0770e3'">
+        Sign in
+      </button>
+    </form>
+    <div style="margin-top:16px;text-align:center">
+      <span style="font-size:0.78rem;color:#9aa7ba">Demo accounts — click to fill: </span>
+      <button onclick="fillModalDemo('alice')" style="background:none;border:1px solid #e6e8f0;border-radius:6px;padding:3px 10px;font-size:0.78rem;color:#0770e3;cursor:pointer;margin:0 3px">alice</button>
+      <button onclick="fillModalDemo('bob')" style="background:none;border:1px solid #e6e8f0;border-radius:6px;padding:3px 10px;font-size:0.78rem;color:#0770e3;cursor:pointer;margin:0 3px">bob</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _modalAfterLogin = null;
+
+function startBattle() {
+  const u = localStorage.getItem('tb_user');
+  const t = localStorage.getItem('tb_token');
+  if (u && t) { window.location.href = '/chat'; } else { openLoginModal('/chat'); }
+}
+function openLoginModal(afterLogin) {
+  _modalAfterLogin = afterLogin || null;
+  document.getElementById('loginModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('modalUsername').focus(), 50);
+}
+function closeLoginModal() {
+  document.getElementById('loginModal').style.display = 'none';
+  document.getElementById('modalError').style.display = 'none';
+  document.getElementById('modalUsername').value = '';
+  document.getElementById('modalPassword').value = '';
+}
+function fillModalDemo(u) {
+  document.getElementById('modalUsername').value = u;
+  document.getElementById('modalPassword').value = 'password';
+}
+async function handleModalLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('modalUsername').value.trim();
+  const password = document.getElementById('modalPassword').value;
+  const btn = document.getElementById('modalLoginBtn');
+  const errBox = document.getElementById('modalError');
+  errBox.style.display = 'none';
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('tb_user', data.user);
+      localStorage.setItem('tb_token', data.token);
+      if (_modalAfterLogin) {
+        window.location.href = _modalAfterLogin;
+      } else {
+        closeLoginModal();
+        updateNavForUser(data.user);
+      }
+    } else {
+      errBox.textContent = data.error || 'Login failed. Try alice / password';
+      errBox.style.display = 'block';
+      btn.textContent = 'Sign in';
+      btn.disabled = false;
+    }
+  } catch {
+    errBox.textContent = 'Cannot connect to server.';
+    errBox.style.display = 'block';
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+  }
+}
+function updateNavForUser(username) {
+  document.getElementById('navRight').innerHTML = `
+    <span style="font-size:0.85rem;font-weight:600;color:#444e5e">👤 ${username}</span>
+    <button class="btn-group-trip" onclick="window.location.href='/chat'" style="margin-left:8px">⚔️ Go to Battle Room</button>
+  `;
+}
+document.getElementById('loginModal').addEventListener('click', function(e) {
+  if (e.target === this) closeLoginModal();
+});
+(function() {
+  const u = localStorage.getItem('tb_user');
+  const t = localStorage.getItem('tb_token');
+  if (u && t) updateNavForUser(u);
+})();
+</script>
+
+</body>
+</html>

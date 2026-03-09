@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skyscanner — Compare cheap flights, hotels and car hire</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; background: #fff; line-height: 1.5; }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; }
+    input, select { font-family: inherit; }
+
+    /* ── Colors ────────────────────────────────────────────────────── */
+    :root {
+      --blue: #0770e3;
+      --blue-dark: #084eb5;
+      --blue-light: #e8f4ff;
+      --navy: #05203c;
+      --yellow: #FFB700;
+      --yellow-dark: #e0a200;
+      --gray-50: #f8f9ff;
+      --gray-100: #f1f2f8;
+      --gray-200: #e6e8f0;
+      --gray-400: #9aa7ba;
+      --gray-600: #444e5e;
+      --white: #fff;
+    }
+
+    /* ── Top header ────────────────────────────────────────────────── */
+    .sky-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .sky-nav {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .sky-logo {
+      display: flex;
+      align-items: center;
+      margin-right: 16px;
+      flex-shrink: 0;
+    }
+    .sky-logo img {
+      height: 38px;
+      width: auto;
+      border-radius: 6px;
+    }
+    .sky-nav-links {
+      display: flex;
+      list-style: none;
+      gap: 0;
+      flex: 1;
+    }
+    .sky-nav-links li a {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      height: 56px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      border-bottom: 3px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .sky-nav-links li a:hover { color: var(--blue); }
+    .sky-nav-links li a.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+      font-weight: 600;
+    }
+    .sky-nav-links li a.nav-new {
+      color: var(--blue);
+      font-weight: 600;
+      position: relative;
+    }
+    .sky-nav-links li a.nav-new::after {
+      content: 'NEW';
+      font-size: 0.52rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      background: #ff5a1f;
+      color: white;
+      padding: 1px 5px;
+      border-radius: 4px;
+      position: absolute;
+      top: 8px;
+      right: 2px;
+    }
+    .sky-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .btn-login {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 2px solid var(--gray-200);
+      background: transparent;
+      color: var(--gray-600);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-login:hover { border-color: var(--blue); color: var(--blue); }
+    .btn-group-trip {
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      border: none;
+      background: var(--blue);
+      color: white;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .btn-group-trip:hover { background: var(--blue-dark); transform: translateY(-1px); }
+
+    /* ── Hero ──────────────────────────────────────────────────────── */
+    .sky-hero {
+      background: linear-gradient(160deg, #06213f 0%, #0b3567 55%, #0770e3 100%);
+      padding: 48px 20px 64px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .sky-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 80%, rgba(255,183,0,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    /* Decorative clouds */
+    .sky-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 48px;
+      background: white;
+      clip-path: ellipse(56% 100% at 50% 100%);
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; }
+    .hero-tagline {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .hero-title {
+      color: white;
+      font-size: clamp(1.75rem, 4.5vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .hero-sub {
+      color: rgba(255,255,255,0.65);
+      font-size: 1rem;
+      margin-bottom: 32px;
+    }
+
+    /* ── Search widget ─────────────────────────────────────────────── */
+    .search-widget {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+      overflow: hidden;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .search-tabs {
+      display: flex;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .search-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 18px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-400);
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      transition: color 0.15s;
+      white-space: nowrap;
+    }
+    .search-tab:hover { color: var(--blue); }
+    .search-tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; background: white; }
+    .tab-icon { font-size: 1rem; }
+
+    /* Trip type pills */
+    .trip-type-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px 0;
+    }
+    .trip-pill {
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border: 1px solid var(--gray-200);
+      background: white;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .trip-pill.active {
+      background: var(--blue-light);
+      border-color: var(--blue);
+      color: var(--blue);
+      font-weight: 600;
+    }
+    .trip-pill:hover:not(.active) { border-color: var(--blue); color: var(--blue); }
+
+    /* Search fields row */
+    .search-fields {
+      display: flex;
+      align-items: stretch;
+      padding: 12px 16px 16px;
+      gap: 6px;
+    }
+    .sf {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      position: relative;
+    }
+    .sf-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gray-400);
+      margin-bottom: 3px;
+      padding: 0 10px;
+    }
+    .sf-input {
+      width: 100%;
+      padding: 10px 10px;
+      border: 2px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #111;
+      background: white;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+    .sf-input:focus { border-color: var(--blue); }
+    .sf-input::placeholder { color: #bbb; font-weight: 400; }
+    .sf-swap {
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 2px;
+      flex-shrink: 0;
+    }
+    .swap-btn {
+      width: 32px;
+      height: 40px;
+      border: 2px solid var(--gray-200);
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .swap-btn:hover { border-color: var(--blue); background: var(--blue-light); }
+    .sf-narrow { flex: 0 0 130px; }
+    .sf-tight  { flex: 0 0 110px; }
+    .search-go {
+      display: flex;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+    .search-btn {
+      height: 44px;
+      padding: 0 28px;
+      border-radius: 8px;
+      background: var(--blue);
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .search-btn:hover { background: var(--blue-dark); transform: translateY(-1px); }
+
+    /* ── Battle CTA strip ──────────────────────────────────────────── */
+    .battle-strip {
+      background: linear-gradient(90deg, #1a0533, #2d0a5e 50%, var(--blue-dark));
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .battle-strip p { color: rgba(255,255,255,0.85); font-size: 0.9rem; }
+    .battle-strip strong { color: white; }
+    .btn-battle-strip {
+      padding: 9px 22px;
+      border-radius: 20px;
+      background: var(--yellow);
+      color: #111;
+      font-weight: 700;
+      font-size: 0.875rem;
+      border: none;
+      transition: background 0.15s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .btn-battle-strip:hover { background: var(--yellow-dark); transform: translateY(-1px); }
+
+    /* ── Content area ──────────────────────────────────────────────── */
+    .content-wrap { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Explore section ───────────────────────────────────────────── */
+    .section { padding: 48px 0; }
+    .section-head { margin-bottom: 24px; }
+    .section-title { font-size: 1.4rem; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+    .section-sub  { font-size: 0.9rem; color: var(--gray-400); }
+
+    /* Service cards */
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .service-card {
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+      background: white;
+    }
+    .service-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); border-color: var(--blue); transform: translateY(-1px); }
+    .service-card.featured { border-color: var(--blue); background: var(--blue-light); }
+    .sc-icon { font-size: 2rem; flex-shrink: 0; }
+    .sc-text-title { font-weight: 700; font-size: 0.95rem; color: var(--navy); }
+    .sc-text-sub  { font-size: 0.8rem; color: var(--gray-400); margin-top: 2px; }
+    .service-card.featured .sc-text-title { color: var(--blue); }
+    .service-card.featured .sc-text-sub  { color: var(--blue); opacity: 0.8; }
+
+    /* Destination cards */
+    .dest-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .dest-card {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--gray-200);
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.15s;
+      background: white;
+    }
+    .dest-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.12); transform: translateY(-2px); }
+    .dest-thumb {
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+    .dest-info {
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .dest-city { font-weight: 700; font-size: 0.9rem; color: var(--navy); }
+    .dest-price { font-weight: 600; font-size: 0.85rem; color: var(--blue); }
+
+    /* ── Promo / Inspire ───────────────────────────────────────────── */
+    .inspire-band {
+      background: linear-gradient(135deg, #00a698 0%, #007a6e 100%);
+      border-radius: 16px;
+      padding: 40px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 48px;
+    }
+    .inspire-band::after {
+      content: '✈';
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-25deg);
+      font-size: 8rem;
+      opacity: 0.07;
+      pointer-events: none;
+    }
+    .inspire-text h2 { color: white; font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; }
+    .inspire-text p  { color: rgba(255,255,255,0.8); font-size: 0.9rem; }
+    .btn-inspire {
+      padding: 12px 28px;
+      border-radius: 8px;
+      background: white;
+      color: #007a6e;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-inspire:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+    /* ── Trust bar ─────────────────────────────────────────────────── */
+    .trust-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      padding: 32px 20px;
+      border-top: 1px solid var(--gray-200);
+      border-bottom: 1px solid var(--gray-200);
+      flex-wrap: wrap;
+    }
+    .trust-item { text-align: center; }
+    .trust-num { font-size: 1.6rem; font-weight: 900; color: var(--navy); }
+    .trust-label { font-size: 0.8rem; color: var(--gray-400); margin-top: 2px; }
+
+    /* ── Footer ────────────────────────────────────────────────────── */
+    .sky-footer {
+      background: var(--navy);
+      color: rgba(255,255,255,0.5);
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 0.8rem;
+      margin-top: 0;
+    }
+    .sky-footer a { color: rgba(255,255,255,0.5); margin: 0 8px; }
+    .sky-footer a:hover { color: white; }
+    .footer-links { margin-bottom: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 0; }
+
+    /* ── Responsive ────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .search-fields { flex-direction: column; }
+      .sf-narrow, .sf-tight { flex: 1; }
+      .sf-swap { justify-content: center; }
+      .search-btn { width: 100%; justify-content: center; }
+      .search-go { width: 100%; }
+      .sky-nav-links { display: none; }
+      .inspire-band { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<header class="sky-header">
+  <nav class="sky-nav">
+    <a href="/" class="sky-logo">
+      <img src="Logo.png" alt="Skyscanner" />
+    </a>
+
+    <ul class="sky-nav-links">
+      <li>
+        <a href="#" class="active">
+          Flights
+        </a>
+      </li>
+      <li>
+        <a href="#">
+          Hotels
+        </a>
+      </li>
+      <li>
+        <a href="#">
+          Car hire
+        </a>
+      </li>
+      <li>
+        <a href="#">
+          More
+        </a>
+      </li>
+      <li>
+        <a href="/group-trip" class="nav-new">
+          Group Trip
+        </a>
+      </li>
+    </ul>
+
+    <div class="sky-nav-right" id="navRight">
+      <button class="btn-login" id="navLoginBtn" onclick="openLoginModal()">Log in</button>
+    </div>
+  </nav>
+</header>
+
+<!-- ── Hero + Search ───────────────────────────────────────────────────── -->
+<section class="sky-hero">
+  <div class="hero-inner">
+    <p class="hero-tagline">Millions of cheap flights. One simple search.</p>
+    <h1 class="hero-title">The world's best trips start here.</h1>
+    <p class="hero-sub">Compare flights, hotels and car hire from hundreds of providers.</p>
+
+    <div class="search-widget">
+      <!-- Tabs -->
+      <div class="search-tabs">
+        <button class="search-tab active" onclick="setTab(this)">
+          <span class="tab-icon">✈</span> Flights
+        </button>
+        <button class="search-tab" onclick="setTab(this)">
+          <span class="tab-icon">🏨</span> Hotels
+        </button>
+        <button class="search-tab" onclick="setTab(this)">
+          <span class="tab-icon">🚗</span> Car hire
+        </button>
+        <button class="search-tab" onclick="setTab(this)">
+          <span class="tab-icon">✈🏨</span> Flights + Hotels
+        </button>
+      </div>
+
+      <!-- Trip type pills -->
+      <div class="trip-type-row">
+        <button class="trip-pill active" onclick="setPill(this)">Return</button>
+        <button class="trip-pill" onclick="setPill(this)">One-way</button>
+        <button class="trip-pill" onclick="setPill(this)">Multi-city</button>
+      </div>
+
+      <!-- Search fields -->
+      <div class="search-fields">
+        <div class="sf">
+          <span class="sf-label">From</span>
+          <input class="sf-input" type="text" placeholder="Country, city or airport" id="fromInput" />
+        </div>
+
+        <div class="sf-swap">
+          <button class="swap-btn" onclick="swapFields()" title="Swap">⇄</button>
+        </div>
+
+        <div class="sf">
+          <span class="sf-label">To</span>
+          <input class="sf-input" type="text" placeholder="Country, city or airport" id="toInput" />
+        </div>
+
+        <div class="sf sf-narrow">
+          <span class="sf-label">Depart</span>
+          <input class="sf-input" type="date" id="departDate" />
+        </div>
+
+        <div class="sf sf-narrow">
+          <span class="sf-label">Return</span>
+          <input class="sf-input" type="date" id="returnDate" />
+        </div>
+
+        <div class="sf sf-tight">
+          <span class="sf-label">Travellers</span>
+          <select class="sf-input">
+            <option>1 adult</option>
+            <option>2 adults</option>
+            <option>3 adults</option>
+            <option>2 adults, 1 child</option>
+            <option>2 adults, 2 children</option>
+          </select>
+        </div>
+
+        <div class="search-go">
+          <button class="search-btn" onclick="handleSearch()">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            Search
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Group Trip battle banner ─────────────────────────────────────────── -->
+<div class="battle-strip">
+  <p><strong>Can't agree on where to go?</strong> Let AI settle the debate with real flight prices.</p>
+  <button class="btn-battle-strip" onclick="window.location.href='/group-trip'">⚔️ Start a Group Trip Battle</button>
+</div>
+
+<!-- ── Main content ─────────────────────────────────────────────────────── -->
+<div class="content-wrap">
+
+  <!-- Services -->
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title">Everything for your trip</h2>
+      <p class="section-sub">Search, compare and save — all in one place.</p>
+    </div>
+    <div class="service-grid">
+      <div class="service-card" onclick="window.location.href='#'">
+        <span class="sc-icon">✈️</span>
+        <div>
+          <div class="sc-text-title">Flights</div>
+          <div class="sc-text-sub">Compare hundreds of airlines</div>
+        </div>
+      </div>
+      <div class="service-card" onclick="window.location.href='#'">
+        <span class="sc-icon">🏨</span>
+        <div>
+          <div class="sc-text-title">Hotels</div>
+          <div class="sc-text-sub">Find the best deal for your stay</div>
+        </div>
+      </div>
+      <div class="service-card" onclick="window.location.href='#'">
+        <span class="sc-icon">🚗</span>
+        <div>
+          <div class="sc-text-title">Car hire</div>
+          <div class="sc-text-sub">Cheap rentals from top providers</div>
+        </div>
+      </div>
+      <div class="service-card featured" onclick="window.location.href='/group-trip'">
+        <span class="sc-icon">⚔️</span>
+        <div>
+          <div class="sc-text-title">Group Trip Battle</div>
+          <div class="sc-text-sub">AI judges your travel debate</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Inspire -->
+  <div class="inspire-band">
+    <div class="inspire-text">
+      <h2>Not sure where to go?</h2>
+      <p>Explore everywhere — find the cheapest flights from your city to any destination worldwide.</p>
+    </div>
+    <button class="btn-inspire" onclick="document.getElementById('toInput').value='Everywhere'; document.getElementById('fromInput').focus()">
+      🌍 Explore Everywhere
+    </button>
+  </div>
+
+  <!-- Popular destinations -->
+  <section class="section" style="padding-top:0">
+    <div class="section-head">
+      <h2 class="section-title">Trending destinations</h2>
+      <p class="section-sub">Popular right now — click to search.</p>
+    </div>
+    <div class="dest-grid">
+      <div class="dest-card" onclick="prefill('Lisbon')">
+        <div class="dest-thumb" style="background:linear-gradient(135deg,#ff9a9e,#fecfef)">🇵🇹</div>
+        <div class="dest-info"><span class="dest-city">Lisbon</span><span class="dest-price">from £69</span></div>
+      </div>
+      <div class="dest-card" onclick="prefill('Barcelona')">
+        <div class="dest-thumb" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)">🇪🇸</div>
+        <div class="dest-info"><span class="dest-city">Barcelona</span><span class="dest-price">from £82</span></div>
+      </div>
+      <div class="dest-card" onclick="prefill('Budapest')">
+        <div class="dest-thumb" style="background:linear-gradient(135deg,#ffecd2,#fcb69f)">🇭🇺</div>
+        <div class="dest-info"><span class="dest-city">Budapest</span><span class="dest-price">from £64</span></div>
+      </div>
+      <div class="dest-card" onclick="prefill('Tokyo')">
+        <div class="dest-thumb" style="background:linear-gradient(135deg,#fda085,#f6d365)">🇯🇵</div>
+        <div class="dest-info"><span class="dest-city">Tokyo</span><span class="dest-price">from £540</span></div>
+      </div>
+      <div class="dest-card" onclick="prefill('Amsterdam')">
+        <div class="dest-thumb" style="background:linear-gradient(135deg,#89f7fe,#66a6ff)">🇳🇱</div>
+        <div class="dest-info"><span class="dest-city">Amsterdam</span><span class="dest-price">from £75</span></div>
+      </div>
+      <div class="dest-card" onclick="prefill('New York')">
+        <div class="dest-thumb" style="background:linear-gradient(135deg,#d4fc79,#96e6a1)">🇺🇸</div>
+        <div class="dest-info"><span class="dest-city">New York</span><span class="dest-price">from £320</span></div>
+      </div>
+      <div class="dest-card" onclick="prefill('Dubai')">
+        <div class="dest-thumb" style="background:linear-gradient(135deg,#fddb92,#d1fdff)">🇦🇪</div>
+        <div class="dest-info"><span class="dest-city">Dubai</span><span class="dest-price">from £280</span></div>
+      </div>
+      <div class="dest-card" onclick="prefill('Rome')">
+        <div class="dest-thumb" style="background:linear-gradient(135deg,#f8b500,#ffe082)">🇮🇹</div>
+        <div class="dest-info"><span class="dest-city">Rome</span><span class="dest-price">from £91</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust bar -->
+  <div class="trust-bar">
+    <div class="trust-item">
+      <div class="trust-num">100M+</div>
+      <div class="trust-label">Travellers worldwide</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-num">1,200+</div>
+      <div class="trust-label">Airlines compared</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-num">6,900+</div>
+      <div class="trust-label">Airports in our database</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-num">Free</div>
+      <div class="trust-label">Always free to search</div>
+    </div>
+  </div>
+
+  <!-- Second promo -->
+  <section class="section" style="padding-bottom:64px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px">
+        <span style="font-size:2rem">📱</span>
+        <h3 style="font-size:1.1rem;font-weight:800;color:var(--navy)">Get the Skyscanner app</h3>
+        <p style="font-size:0.875rem;color:var(--gray-400)">Track prices, get alerts and book wherever you are.</p>
+        <button style="align-self:flex-start;padding:10px 20px;border-radius:8px;background:var(--navy);color:white;border:none;font-weight:600;font-size:0.875rem;cursor:pointer">Download now</button>
+      </div>
+      <div style="background:linear-gradient(135deg,#0770e3,#084eb5);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:12px;cursor:pointer" onclick="window.location.href='/group-trip'">
+        <span style="font-size:2rem">⚔️</span>
+        <h3 style="font-size:1.1rem;font-weight:800;color:white">Group Trip Battle</h3>
+        <p style="font-size:0.875rem;color:rgba(255,255,255,0.75)">Settle the debate with friends. AI judges destinations using real flight prices.</p>
+        <button style="align-self:flex-start;padding:10px 20px;border-radius:8px;background:var(--yellow);color:#111;border:none;font-weight:700;font-size:0.875rem;cursor:pointer">Try it now ⚔️</button>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /content-wrap -->
+
+<!-- ── Footer ──────────────────────────────────────────────────────────── -->
+<footer class="sky-footer">
+  <div class="footer-links">
+    <a href="#">About</a><a href="#">Jobs</a><a href="#">Press</a>
+    <a href="#">Advertise</a><a href="#">Privacy</a><a href="#">Terms</a>
+    <a href="/group-trip">Group Trip</a>
+  </div>
+  <p>© 2025 Skyscanner Ltd · TravelBattle is a <strong style="color:rgba(255,255,255,0.7)">HackUPC 2025</strong> prototype</p>
+</footer>
+
+<!-- ── Login Modal ─────────────────────────────────────────────────────── -->
+<div id="loginModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(5,32,60,0.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,0.25);position:relative;margin:16px">
+    <button onclick="closeLoginModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;color:#9aa7ba;cursor:pointer">✕</button>
+    <div style="text-align:center;margin-bottom:24px">
+      <img src="Logo.png" alt="Skyscanner" style="height:36px;border-radius:6px;margin-bottom:12px" />
+      <div style="font-size:1.1rem;font-weight:800;color:#05203c">Sign in to Skyscanner</div>
+      <div style="font-size:0.82rem;color:#9aa7ba;margin-top:4px">Join the Group Trip arena</div>
+    </div>
+    <div id="modalError" style="display:none;background:#fee2e2;color:#b91c1c;padding:10px 14px;border-radius:8px;font-size:0.85rem;margin-bottom:16px"></div>
+    <form onsubmit="handleModalLogin(event)">
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:0.8rem;font-weight:600;color:#444e5e;margin-bottom:6px">Username</label>
+        <input id="modalUsername" type="text" placeholder="alice or bob" autocomplete="username"
+          style="width:100%;padding:10px 14px;border:1.5px solid #e6e8f0;border-radius:8px;font-size:0.9rem;outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderColor='#0770e3'" onblur="this.style.borderColor='#e6e8f0'" required />
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:0.8rem;font-weight:600;color:#444e5e;margin-bottom:6px">Password</label>
+        <input id="modalPassword" type="password" placeholder="password" autocomplete="current-password"
+          style="width:100%;padding:10px 14px;border:1.5px solid #e6e8f0;border-radius:8px;font-size:0.9rem;outline:none;transition:border-color 0.15s"
+          onfocus="this.style.borderColor='#0770e3'" onblur="this.style.borderColor='#e6e8f0'" required />
+      </div>
+      <button id="modalLoginBtn" type="submit"
+        style="width:100%;padding:12px;background:#0770e3;color:white;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;transition:background 0.15s"
+        onmouseover="this.style.background='#084eb5'" onmouseout="this.style.background='#0770e3'">
+        Sign in
+      </button>
+    </form>
+    <div style="margin-top:16px;text-align:center">
+      <span style="font-size:0.78rem;color:#9aa7ba">Demo accounts — click to fill: </span>
+      <button onclick="fillModalDemo('alice')" style="background:none;border:1px solid #e6e8f0;border-radius:6px;padding:3px 10px;font-size:0.78rem;color:#0770e3;cursor:pointer;margin:0 3px">alice</button>
+      <button onclick="fillModalDemo('bob')" style="background:none;border:1px solid #e6e8f0;border-radius:6px;padding:3px 10px;font-size:0.78rem;color:#0770e3;cursor:pointer;margin:0 3px">bob</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────────
+function setTab(el) {
+  document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+function setPill(el) {
+  document.querySelectorAll('.trip-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Swap fields ────────────────────────────────────────────────────────────
+function swapFields() {
+  const a = document.getElementById('fromInput');
+  const b = document.getElementById('toInput');
+  [a.value, b.value] = [b.value, a.value];
+  a.style.transform = 'scale(1.02)';
+  b.style.transform = 'scale(1.02)';
+  setTimeout(() => { a.style.transform = ''; b.style.transform = ''; }, 200);
+}
+
+// ── Prefill destination ────────────────────────────────────────────────────
+function prefill(city) {
+  document.getElementById('toInput').value = city;
+  document.getElementById('fromInput').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Search → redirect to group trip ───────────────────────────────────────
+function handleSearch() {
+  const from = document.getElementById('fromInput').value.trim();
+  const to   = document.getElementById('toInput').value.trim();
+  if (!from || !to) {
+    document.getElementById('fromInput').focus();
+    return;
+  }
+  window.location.href = '/group-trip';
+}
+
+// ── Default dates ──────────────────────────────────────────────────────────
+(function () {
+  const today  = new Date();
+  const depart = new Date(today); depart.setDate(today.getDate() + 14);
+  const ret    = new Date(today); ret.setDate(today.getDate() + 21);
+  document.getElementById('departDate').value = depart.toISOString().split('T')[0];
+  document.getElementById('returnDate').value  = ret.toISOString().split('T')[0];
+})();
+
+// ── Start battle (go to chat if already logged in, else open modal) ────────
+function startBattle() {
+  const u = localStorage.getItem('tb_user');
+  const t = localStorage.getItem('tb_token');
+  if (u && t) { window.location.href = '/chat'; } else { openLoginModal('/chat'); }
+}
+
+// ── Login modal ────────────────────────────────────────────────────────────
+let _modalAfterLogin = null; // optional redirect after login
+
+function openLoginModal(afterLogin) {
+  _modalAfterLogin = afterLogin || null;
+  document.getElementById('loginModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('modalUsername').focus(), 50);
+}
+function closeLoginModal() {
+  document.getElementById('loginModal').style.display = 'none';
+  document.getElementById('modalError').style.display = 'none';
+  document.getElementById('modalUsername').value = '';
+  document.getElementById('modalPassword').value = '';
+}
+function fillModalDemo(u) {
+  document.getElementById('modalUsername').value = u;
+  document.getElementById('modalPassword').value = 'password';
+}
+async function handleModalLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('modalUsername').value.trim();
+  const password = document.getElementById('modalPassword').value;
+  const btn = document.getElementById('modalLoginBtn');
+  const errBox = document.getElementById('modalError');
+  errBox.style.display = 'none';
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('tb_user', data.user);
+      localStorage.setItem('tb_token', data.token);
+      if (_modalAfterLogin) {
+        window.location.href = _modalAfterLogin;
+      } else {
+        closeLoginModal();
+        updateNavForUser(data.user);
+      }
+    } else {
+      errBox.textContent = data.error || 'Login failed. Try alice / password';
+      errBox.style.display = 'block';
+      btn.textContent = 'Sign in';
+      btn.disabled = false;
+    }
+  } catch {
+    errBox.textContent = 'Cannot connect to server.';
+    errBox.style.display = 'block';
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+  }
+}
+function updateNavForUser(username) {
+  const navRight = document.getElementById('navRight');
+  navRight.innerHTML = `
+    <span style="font-size:0.85rem;font-weight:600;color:#444e5e">👤 ${username}</span>
+  `;
+}
+// Close modal on backdrop click
+document.getElementById('loginModal').addEventListener('click', function(e) {
+  if (e.target === this) closeLoginModal();
+});
+// On load — restore logged-in state if session exists
+(function() {
+  const u = localStorage.getItem('tb_user');
+  const t = localStorage.getItem('tb_token');
+  if (u && t) updateNavForUser(u);
+})();
+</script>
+</body>
+</html>

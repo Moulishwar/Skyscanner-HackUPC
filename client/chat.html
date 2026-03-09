@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Group Trip — Skyscanner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Socket.io client from server -->
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+<div class="chat-layout" id="chatLayout">
+
+  <!-- ── Left Sidebar ─────────────────────────────────────────────────── -->
+  <aside class="chat-sidebar-left">
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <img src="Logo_2.png" alt="Skyscanner" style="height:32px;width:auto;object-fit:contain;border-radius:6px" />
+        <div>
+          Skyscanner
+          <span>Group Trip</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- User profile -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">You</div>
+      <div class="user-profile">
+        <div class="user-avatar" id="sidebarAvatar" style="background:var(--sky-blue)">?</div>
+        <div>
+          <div class="user-info-name" id="sidebarUsername">—</div>
+          <div class="user-info-personality" id="sidebarPersonality">Connecting…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- In the Room -->
+    <div class="sidebar-section" id="roomSection">
+      <div class="sidebar-section-title">In the Room</div>
+      <div id="onlineUsersList">
+        <div style="color:rgba(255,255,255,0.3);font-size:0.75rem">Waiting for others…</div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Flight Settings</div>
+
+      <!-- ── Display mode (default) ── -->
+      <div id="settingsDisplay">
+        <div class="settings-display-row">
+          <div class="settings-display-item">
+            <span class="settings-display-label">Origin</span>
+            <span class="settings-display-value" id="displayOrigin">LHR</span>
+          </div>
+          <div class="settings-display-item">
+            <span class="settings-display-label">Budget</span>
+            <span class="settings-display-value" id="displayBudget">—</span>
+          </div>
+          <button class="btn-edit-settings" onclick="enterEditMode()" title="Edit settings">
+            ✏️ Edit
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Edit mode (hidden by default) ── -->
+      <div id="settingsEdit" style="display:none">
+        <div class="settings-form">
+          <div>
+            <label class="settings-label">Origin Airport (IATA)</label>
+            <input
+              type="text"
+              id="settingOrigin"
+              class="settings-input"
+              placeholder="e.g. LHR, BCN, JFK"
+              maxlength="3"
+              style="text-transform:uppercase"
+            />
+          </div>
+          <div>
+            <label class="settings-label">Budget (£)</label>
+            <input
+              type="number"
+              id="settingBudget"
+              class="settings-input"
+              placeholder="e.g. 200"
+              min="0"
+            />
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-settings" style="flex:1" onclick="saveSettings()">💾 Save</button>
+            <button class="btn-cancel-settings" onclick="cancelEditMode()">✕</button>
+          </div>
+        </div>
+        <div id="settingsSaved" style="color:rgba(255,255,255,0.5);font-size:0.75rem;margin-top:8px;display:none">
+          ✓ Saved
+        </div>
+      </div>
+    </div>
+
+    <!-- Commands reference -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Commands</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="cmd-hint" onclick="prefillCommand('/battle Paris vs Tokyo')">
+          <span class="cmd-hint-code">/battle A vs B vs C</span>
+          <span class="cmd-hint-desc">Start a destination battle</span>
+        </div>
+        <div class="cmd-hint" onclick="prefillCommand('/suggest beach destinations')">
+          <span class="cmd-hint-code">/suggest [prompt]</span>
+          <span class="cmd-hint-desc">Get AI destination ideas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <div style="margin-top:auto;padding:20px">
+      <button
+        onclick="logout()"
+        style="width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(255,255,255,0.5);font-size:0.8rem;cursor:pointer;transition:all 0.18s"
+        onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+        onmouseout="this.style.background='rgba(255,255,255,0.06)'"
+      >
+        ← Log out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Chat Main ─────────────────────────────────────────────────────── -->
+  <main class="chat-main">
+    <div class="chat-topbar">
+      <div class="online-dot"></div>
+      <div>
+        <div class="chat-topbar-title">TravelBattle Arena</div>
+        <div class="chat-topbar-sub" id="onlineCount">Connecting…</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button
+          class="btn btn-secondary"
+          style="padding:8px 14px;font-size:0.8rem"
+          onclick="prefillCommand('/suggest ')"
+        > Suggest</button>
+        <button
+          class="btn btn-primary"
+          style="padding:8px 14px;font-size:0.8rem"
+          onclick="prefillCommand('/battle ')"
+        > Battle</button>
+      </div>
+    </div>
+
+    <!-- New Ideas Panel (sits between header and messages, persists) -->
+    <div id="newIdeasPanel" style="display:none">
+      <div id="newIdeasLoading" class="new-ideas-loading">
+        <div class="new-ideas-spinner"></div>
+        <span>Loading new ideas…</span>
+      </div>
+      <div id="newIdeasContent" class="new-ideas-content" style="display:none">
+        <div class="new-ideas-header"><span>💡</span><span>New Ideas</span></div>
+        <div id="newIdeasText"></div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages-area" id="messagesArea">
+      <div class="msg msg-system">
+        <div class="msg-bubble">Welcome to TravelBattle! Use <strong>/battle Paris vs Tokyo</strong> to start a fight ✈️</div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area">
+      <div class="chat-input-hint">
+        Try: <code>/battle Lisbon vs Budapest vs Prague</code> or <code>/suggest warm destinations</code>
+      </div>
+      <!-- Battle autocomplete pill bar (shown only during /battle mode) -->
+      <div id="battleBuilder" style="display:none">
+        <div id="battlePills" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 0 6px;min-height:36px"></div>
+        <div id="battleSuggestions" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
+      </div>
+      <div class="chat-input-row">
+        <textarea
+          id="chatInput"
+          class="chat-textarea"
+          rows="1"
+          placeholder="Type a message or /battle command…"
+          onkeydown="handleKey(event)"
+          oninput="handleInput(event)"
+        ></textarea>
+        <button class="chat-send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Right Sidebar ─────────────────────────────────────────────────── -->
+  <aside class="chat-sidebar-right">
+    <!-- Status -->
+    <div class="right-panel-section">
+      <div class="panel-title">Status</div>
+      <div class="battle-indicator" id="battleIndicator">
+        <div class="battle-spinner"></div>
+        <span id="statusLabel">AI is judging…</span>
+      </div>
+      <div id="battleIdle" style="font-size:0.8rem;color:var(--gray-300)">
+        Type <span style="color:var(--sky-blue);font-weight:600">/battle</span> to start a fight or <span style="color:var(--sky-blue);font-weight:600">/suggest</span> for ideas.
+      </div>
+    </div>
+
+    <!-- Recently viewed destinations -->
+    <div class="right-panel-section" id="recentCitiesSection">
+      <div class="panel-title">🕐 Recently Viewed</div>
+      <div id="recentCitiesList">
+        <div class="lb-empty" style="font-size:0.78rem">No destinations viewed yet</div>
+      </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="right-panel-section">
+      <div class="panel-title">🏆 Leaderboard</div>
+      <div class="leaderboard-list" id="leaderboardList">
+        <div class="lb-empty">No wins yet — start a battle!</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<style>
+.cmd-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cmd-hint:hover { background: rgba(255,255,255,0.1); }
+.cmd-hint-code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: var(--sky-yellow);
+  font-weight: 700;
+}
+.cmd-hint-desc {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ── Battle builder ─────────────────────────────────────────── */
+.battle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sky-blue);
+  color: white;
+  border-radius: 20px;
+  padding: 4px 10px 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  animation: pillIn 0.15s ease;
+}
+@keyframes pillIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.battle-pill-remove {
+  background: rgba(255,255,255,0.25);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.12s;
+}
+.battle-pill-remove:hover { background: rgba(255,0,0,0.5); }
+.battle-vs-sep {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--sky-yellow);
+  letter-spacing: 0.06em;
+  padding: 0 2px;
+}
+.battle-send-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sky-orange, #ff7043);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+}
+.battle-send-pill:hover { background: #e5532a; transform: scale(1.04); }
+.city-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: white;
+  border: 1.5px solid var(--gray-200, #e6e8f0);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-700, #444e5e);
+  cursor: pointer;
+  transition: border-color 0.13s, background 0.13s, transform 0.12s;
+  animation: chipIn 0.12s ease;
+}
+@keyframes chipIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.city-chip:hover { border-color: var(--sky-blue, #0770e3); background: #e8f2ff; color: var(--sky-blue, #0770e3); transform: translateY(-1px); }
+.city-chip .chip-country { font-size: 0.68rem; font-weight: 400; color: #9aa7ba; margin-left: 2px; }
+
+/* ── Settings display / edit mode ───────────────────────────────── */
+.settings-display-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.settings-display-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.settings-display-item + .settings-display-item {
+  border-left: 1px solid rgba(255,255,255,0.1);
+  padding-left: 12px;
+  margin-left: 4px;
+}
+.settings-display-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.35);
+}
+.settings-display-value {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+.btn-edit-settings {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.btn-edit-settings:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+.btn-cancel-settings {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.85rem;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.btn-cancel-settings:hover { background: rgba(255,60,60,0.2); color: #fff; }
+
+/* ── Vote panel ─────────────────────────────────────────── */
+.vote-panel {
+  background: linear-gradient(135deg, #1a2340, #0f1a30);
+  border: 1.5px solid rgba(255, 183, 0, 0.35);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 6px 0;
+  animation: voteIn 0.2s ease;
+}
+@keyframes voteIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.vote-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--sky-yellow, #ffd166);
+  margin-bottom: 10px;
+}
+.vote-timer {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(255,183,0,0.2);
+  border-radius: 20px;
+  padding: 2px 10px;
+  min-width: 40px;
+  text-align: center;
+}
+.vote-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.vote-btn {
+  flex: 1 1 auto;
+  min-width: 90px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.12s;
+  text-align: center;
+}
+.vote-btn:hover { background: rgba(7,112,227,0.35); border-color: var(--sky-blue); transform: translateY(-1px); }
+.vote-btn.voted { background: var(--sky-blue); border-color: var(--sky-blue); cursor: default; transform: none; }
+.vote-tally {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+}
+
+/* ── Recently viewed cards ───────────────────────────────── */
+.recent-city-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--gray-50, #f7f8fc);
+  border: 1px solid var(--gray-100, #e6e8f0);
+  margin-bottom: 6px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.recent-city-card:hover { background: #edf2ff; border-color: #c7d9f8; }
+.recent-city-text {
+  flex: 1;
+  min-width: 0;
+}
+.recent-city-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gray-700, #444e5e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.recent-city-country {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--sky-blue, #0770e3);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.recent-city-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.recent-city-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+.recent-city-stat-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-300, #9aa7ba);
+  line-height: 1.2;
+}
+.recent-city-stat-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray-600, #5a6478);
+  line-height: 1.3;
+}
+</style>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const currentUser = localStorage.getItem('tb_user');
+const currentToken = localStorage.getItem('tb_token');
+
+if (!currentUser || !currentToken) {
+  window.location.href = '/login';
+}
+
+const AVATAR_COLORS = [
+  '#0770e3', '#00a698', '#ff7043', '#7b2d8b',
+  '#e91e8c', '#f59e0b', '#10b981', '#6366f1'
+];
+
+function userColor(name) {
+  let hash = 0;
+  for (let c of name) hash = c.charCodeAt(0) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function avatarLetter(name) {
+  return (name || '?')[0].toUpperCase();
+}
+
+// ── Socket ─────────────────────────────────────────────────────────────────
+const socket = io();
+
+socket.on('connect', () => {
+  const origin = localStorage.getItem('tb_origin') || 'LHR';
+  const budget = localStorage.getItem('tb_budget') || null;
+  socket.emit('join', { username: currentUser, origin, budget });
+
+  // pre-fill both display and edit UI
+  document.getElementById('displayOrigin').textContent = origin;
+  document.getElementById('displayBudget').textContent = budget ? `£${budget}` : '—';
+  document.getElementById('settingOrigin').value = origin;
+  document.getElementById('settingBudget').value = budget || '';
+});
+
+socket.on('joined', ({ username }) => {
+  document.getElementById('sidebarUsername').textContent = username;
+  document.getElementById('sidebarPersonality').textContent = '';
+  document.getElementById('sidebarAvatar').textContent = avatarLetter(username);
+  document.getElementById('sidebarAvatar').style.background = userColor(username);
+});
+
+socket.on('history', (msgs) => {
+  const area = document.getElementById('messagesArea');
+  // clear welcome message
+  area.innerHTML = '';
+  msgs.forEach(renderMessage);
+  scrollToBottom();
+});
+
+socket.on('message', (msg) => {
+  renderMessage(msg);
+  scrollToBottom();
+});
+
+socket.on('leaderboard', (data) => {
+  renderLeaderboard(data);
+});
+
+
+socket.on('battleStarted', ({ destinations }) => {
+  document.getElementById('statusLabel').textContent = 'AI is judging…';
+  document.getElementById('battleIndicator').classList.add('visible');
+  document.getElementById('battleIdle').style.display = 'none';
+});
+
+socket.on('suggestStarted', () => {
+  document.getElementById('statusLabel').textContent = 'AI is thinking…';
+  document.getElementById('battleIndicator').classList.add('visible');
+  document.getElementById('battleIdle').style.display = 'none';
+});
+
+socket.on('battleVoteOpen', ({ battleId, destinations, timeoutMs }) => {
+  openVotePanel(battleId, destinations, timeoutMs);
+});
+
+socket.on('battleVoteUpdate', ({ battleId, votes, total }) => {
+  updateVoteTally(battleId, votes, total);
+});
+
+socket.on('battleVoteClosed', ({ battleId }) => {
+  closeVotePanel(battleId);
+});
+
+socket.on('recentCities', (cities) => {
+  renderRecentCities(cities);
+});
+
+socket.on('settingsUpdated', () => {
+  // Display update is handled in saveSettings() directly
+});
+
+socket.on('disconnect', () => {
+  document.getElementById('onlineCount').textContent = 'Disconnected — refresh to reconnect';
+});
+
+socket.on('onlineUsers', (users) => {
+  renderOnlineUsers(users);
+  const count = users.length;
+  document.getElementById('onlineCount').textContent =
+    count === 0 ? 'No players online' :
+    count === 1 ? '1 player online' :
+    `${count} players online`;
+
+  // Show the loading panel as soon as 2+ players are in the room (if no ideas yet)
+  const panel = document.getElementById('newIdeasPanel');
+  const content = document.getElementById('newIdeasContent');
+  if (count >= 2 && panel.style.display === 'none' && content.style.display === 'none') {
+    panel.style.display = 'block';
+  }
+});
+
+// ── Markdown renderer ──────────────────────────────────────────────────────
+// Converts LLM output (which may contain markdown) to clean HTML
+function renderMarkdown(raw) {
+  if (!raw) return '';
+  // Escape HTML first to prevent XSS
+  let text = escHtml(raw);
+  // Bold: **text**
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic: *text* (not touching **bold** already replaced)
+  text = text.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, '<em>$1</em>');
+
+  // Process line-by-line: turn "- item" into styled bullet rows
+  const lines = text.split('\n');
+  const html = lines.map(line => {
+    const t = line.trim();
+    if (t.startsWith('- ') || t.startsWith('• ')) {
+      return `<span style="display:block;padding:3px 0 3px 18px;position:relative"><span style="position:absolute;left:4px;opacity:0.6">✦</span>${t.slice(2)}</span>`;
+    }
+    // Numbered list: "1. item"
+    const numMatch = t.match(/^(\d+)\.\s+(.+)/);
+    if (numMatch) {
+      return `<span style="display:block;padding:3px 0 3px 22px;position:relative"><span style="position:absolute;left:4px;opacity:0.6;font-weight:700">${numMatch[1]}.</span>${numMatch[2]}</span>`;
+    }
+    return line;
+  });
+
+  return html.join('\n').replace(/\n/g, '<br>');
+}
+
+// ── Render online users in sidebar ────────────────────────────────────────
+function showNewIdeas(text) {
+  const panel = document.getElementById('newIdeasPanel');
+  const loading = document.getElementById('newIdeasLoading');
+  const content = document.getElementById('newIdeasContent');
+  document.getElementById('newIdeasText').textContent = text;
+  panel.style.display = 'block';
+  loading.style.display = 'none';
+  content.style.display = 'block';
+}
+
+function renderOnlineUsers(users) {
+  const list = document.getElementById('onlineUsersList');
+  const others = users.filter(u => u.username !== currentUser);
+  if (others.length === 0) {
+    list.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:0.75rem">Waiting for others…</div>';
+    return;
+  }
+  list.innerHTML = others.map(u => `
+    <div class="user-profile" style="gap:10px">
+      <div class="user-avatar" style="background:${userColor(u.username)};width:32px;height:32px;font-size:0.75rem;flex-shrink:0">${avatarLetter(u.username)}</div>
+      <div>
+        <div class="user-info-name" style="font-size:0.85rem">${escHtml(u.username)}</div>
+        <div class="user-info-personality" style="font-size:0.7rem">📍 ${escHtml(u.origin || 'LHR')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Render messages ────────────────────────────────────────────────────────
+function renderMessage(msg) {
+  const area = document.getElementById('messagesArea');
+  const el = document.createElement('div');
+
+  const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+  if (msg.type === 'system') {
+    el.className = 'msg msg-system';
+    el.innerHTML = `<div class="msg-bubble">${escHtml(msg.text)}</div>`;
+
+  } else if (msg.type === 'battleVote') {
+    // History replay — vote is already closed, show as a note
+    el.className = 'msg msg-system';
+    el.innerHTML = `<div class="msg-bubble">🗳️ Vote was open for: <strong>${escHtml((msg.destinations || []).join(' vs '))}</strong></div>`;
+
+  } else if (msg.type === 'verdict') {
+    el.className = 'msg msg-verdict';
+
+    // Build inline flight data table if available
+    let flightTable = '';
+    if (msg.flightResults?.length) {
+      const rows = msg.flightResults.map(f => {
+        if (f.error) return `<tr><td><strong>${escHtml(f.destination)}</strong></td><td colspan="3" style="color:#f87171">⚠️ ${escHtml(f.error)}</td></tr>`;
+        let perOriginHtml = '';
+        if (f.perOrigin?.length > 1) {
+          perOriginHtml = '<div style="font-size:0.68rem;opacity:0.6;margin-top:2px">' +
+            f.perOrigin.map(o => `${escHtml(o.origin)}: ${escHtml(o.price)}`).join(' · ') +
+            '</div>';
+        }
+        return `<tr>
+          <td><strong>${escHtml(f.destination)}</strong>${perOriginHtml}</td>
+          <td>${escHtml(f.priceFormatted || '—')}</td>
+          <td>${escHtml(f.duration || 'N/A')}</td>
+          <td>${f.stops ?? 'N/A'} stop(s)</td>
+        </tr>`;
+      }).join('');
+      flightTable = `
+        <table style="width:100%;border-collapse:collapse;font-size:0.78rem;margin-top:10px;opacity:0.85">
+          <thead><tr style="opacity:0.5;font-size:0.7rem">
+            <th style="text-align:left;padding:3px 6px">Destination</th>
+            <th style="text-align:left;padding:3px 6px">Avg Price</th>
+            <th style="text-align:left;padding:3px 6px">Avg Time</th>
+            <th style="text-align:left;padding:3px 6px">Stops</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    el.innerHTML = `
+      <div class="msg-bubble">
+        <div class="verdict-header">
+          <span>🤖</span><span>Our Verdict</span><span style="margin-left:auto">${time}</span>
+        </div>
+        ${renderMarkdown(msg.text)}
+        ${flightTable}
+      </div>
+    `;
+    if (msg.flightResults?.length) renderFlightResults(msg.flightResults);
+    document.getElementById('battleIndicator').classList.remove('visible');
+    document.getElementById('battleIdle').style.display = 'block';
+
+  } else if (msg.type === 'ai-comment') {
+    el.className = 'msg msg-verdict msg-ai-comment';
+    el.innerHTML = `
+      <div class="msg-bubble">
+        <div class="verdict-header"><span>💬</span><span>AI Commentary</span><span style="margin-left:auto">${time}</span></div>
+        ${renderMarkdown(msg.text)}
+      </div>
+    `;
+  } else if (msg.type === 'challenge') {
+    // Populate the persistent New Ideas panel instead of inserting a chat bubble
+    showNewIdeas(msg.text);
+    return; // no chat bubble
+  } else if (msg.type === 'chat') {
+    const isOwn = msg.user === currentUser;
+    el.className = `msg msg-chat ${isOwn ? 'msg-own' : ''}`;
+    const color = userColor(msg.user || '?');
+    el.innerHTML = `
+      <div class="msg-header">
+        <div class="msg-avatar" style="background:${color}">${avatarLetter(msg.user || '?')}</div>
+        <span class="msg-username">${escHtml(msg.user || '')}</span>
+        <span class="msg-time">${time}</span>
+      </div>
+      <div class="msg-bubble">${escHtml(msg.text).replace(/\n/g, '<br>')}</div>
+    `;
+  }
+
+  area.appendChild(el);
+}
+
+function renderLeaderboard(data) {
+  const list = document.getElementById('leaderboardList');
+  if (!data || !data.length) {
+    list.innerHTML = '<div class="lb-empty">No wins yet — start a battle!</div>';
+    return;
+  }
+  const rankClass = (i) => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+  const rankEmoji = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}`;
+  list.innerHTML = data.map((entry, i) => `
+    <div class="lb-entry">
+      <div class="lb-rank ${rankClass(i)}">${rankEmoji(i)}</div>
+      <div class="lb-avatar" style="width:26px;height:26px;border-radius:50%;background:${userColor(entry.user)};display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;color:white;flex-shrink:0">${avatarLetter(entry.user)}</div>
+      <div class="lb-name">${escHtml(entry.user)}</div>
+      <div class="lb-wins">${entry.wins} win${entry.wins !== 1 ? 's' : ''}</div>
+    </div>
+  `).join('');
+}
+
+function renderFlightResults(results) {
+  // Flight results are now shown inline in the verdict message.
+  // This function is kept for compatibility but no longer updates a sidebar panel.
+  if (!results || !results.length) return;
+}
+
+// ── Send message ───────────────────────────────────────────────────────────
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  if (battleMode) { commitBattle(); return; }
+  const text = input.value.trim();
+  if (!text) return;
+  socket.emit('chatMessage', { text });
+  input.value = '';
+  input.style.height = 'auto';
+}
+
+// ── Battle autocomplete state ──────────────────────────────────────────────
+let battleMode   = false;
+let battleCities = [];
+let acTimer      = null;
+
+function handleInput(e) {
+  autoResize(e.target);
+  const val = e.target.value;
+  if (/^\/battle\b/i.test(val)) {
+    enterBattleMode(val);
+  } else {
+    exitBattleMode();
+  }
+}
+
+function enterBattleMode(val) {
+  battleMode = true;
+  document.getElementById('battleBuilder').style.display = 'block';
+  document.getElementById('chatInput').placeholder = 'Type a city name…';
+
+  // Find what the user is currently typing after the last "vs"
+  const afterCmd = val.replace(/^\/battle\s*/i, '');
+  const parts    = afterCmd.split(/\s+vs\s+/i);
+  const typing   = parts[parts.length - 1].trim();
+
+  renderPills();
+  clearTimeout(acTimer);
+  if (typing.length >= 1) {
+    acTimer = setTimeout(() => fetchCitySuggestions(typing), 180);
+  } else {
+    clearSuggestions();
+  }
+}
+
+function exitBattleMode() {
+  battleMode    = false;
+  battleCities  = [];
+  clearSuggestions();
+  document.getElementById('battleBuilder').style.display = 'none';
+  document.getElementById('chatInput').placeholder = 'Type a message or /battle command…';
+}
+
+function fetchCitySuggestions(query) {
+  if (!query) { clearSuggestions(); return; }
+  fetch(`/api/cities?q=${encodeURIComponent(query)}`)
+    .then(r => r.json())
+    .then(data => renderSuggestions(data.results || []))
+    .catch(() => clearSuggestions());
+}
+
+function renderSuggestions(cities) {
+  const box = document.getElementById('battleSuggestions');
+  if (!cities.length) { box.innerHTML = ''; return; }
+  box.innerHTML = cities.map(c => `
+    <button class="city-chip" onclick="pickCity('${escAttr(c.city)}')">
+      ${escHtml(c.city)}<span class="chip-country">${escHtml(c.country)}</span>
+    </button>
+  `).join('');
+}
+
+function clearSuggestions() {
+  document.getElementById('battleSuggestions').innerHTML = '';
+}
+
+function pickCity(city) {
+  if (!battleCities.includes(city)) battleCities.push(city);
+  clearSuggestions();
+  // Rewrite textarea to /battle CityA vs CityB vs [typing next]
+  const input    = document.getElementById('chatInput');
+  input.value    = '/battle ' + battleCities.join(' vs ') + ' vs ';
+  input.focus();
+  renderPills();
+}
+
+function removeCity(idx) {
+  battleCities.splice(idx, 1);
+  const input = document.getElementById('chatInput');
+  input.value = battleCities.length
+    ? '/battle ' + battleCities.join(' vs ') + ' vs '
+    : '/battle ';
+  renderPills();
+  input.focus();
+}
+
+function renderPills() {
+  const box = document.getElementById('battlePills');
+  if (battleCities.length === 0) {
+    box.innerHTML = '<span style="font-size:0.75rem;color:#9aa7ba">Type a city name to add destinations…</span>';
+    return;
+  }
+  const pillsHtml = battleCities.map((c, i) => `
+    ${i > 0 ? '<span class="battle-vs-sep">VS</span>' : ''}
+    <span class="battle-pill">
+      ${escHtml(c)}
+      <button class="battle-pill-remove" onclick="removeCity(${i})" title="Remove">✕</button>
+    </span>
+  `).join('');
+  const sendBtn = battleCities.length >= 2
+    ? `<button class="battle-send-pill" onclick="commitBattle()">⚔️ Battle!</button>`
+    : '';
+  box.innerHTML = pillsHtml + sendBtn;
+}
+
+function commitBattle() {
+  if (battleCities.length < 2) return;
+  const cmd = '/battle ' + battleCities.join(' vs ');
+  socket.emit('chatMessage', { text: cmd });
+  const input = document.getElementById('chatInput');
+  input.value = '';
+  input.style.height = 'auto';
+  exitBattleMode();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    battleMode ? commitBattle() : sendMessage();
+    return;
+  }
+  // Tab / ArrowRight accepts top suggestion
+  if ((e.key === 'Tab' || e.key === 'ArrowRight') && battleMode) {
+    const first = document.querySelector('.city-chip');
+    if (first) { e.preventDefault(); first.click(); }
+  }
+  // Escape cancels battle mode
+  if (e.key === 'Escape' && battleMode) {
+    exitBattleMode();
+    document.getElementById('chatInput').value = '';
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function prefillCommand(cmd) {
+  const input = document.getElementById('chatInput');
+  input.value = cmd;
+  input.focus();
+  handleInput({ target: input });
+  input.setSelectionRange(cmd.length, cmd.length);
+}
+
+function escAttr(str) {
+  return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────
+function enterEditMode() {
+  const origin = localStorage.getItem('tb_origin') || 'LHR';
+  const budget = localStorage.getItem('tb_budget') || '';
+  document.getElementById('settingOrigin').value = origin;
+  document.getElementById('settingBudget').value = budget;
+  document.getElementById('settingsDisplay').style.display = 'none';
+  document.getElementById('settingsEdit').style.display = 'block';
+  document.getElementById('settingOrigin').focus();
+}
+
+function cancelEditMode() {
+  document.getElementById('settingsEdit').style.display = 'none';
+  document.getElementById('settingsDisplay').style.display = 'block';
+  document.getElementById('settingsSaved').style.display = 'none';
+}
+
+function saveSettings() {
+  const origin = document.getElementById('settingOrigin').value.trim().toUpperCase() || 'LHR';
+  const budget = document.getElementById('settingBudget').value.trim() || null;
+  localStorage.setItem('tb_origin', origin);
+  if (budget) localStorage.setItem('tb_budget', budget);
+  else localStorage.removeItem('tb_budget');
+  socket.emit('updateSettings', { origin, budget: budget ? parseFloat(budget) : null });
+
+  // Update display values
+  document.getElementById('displayOrigin').textContent = origin;
+  document.getElementById('displayBudget').textContent = budget ? `£${budget}` : '—';
+
+  // Flash saved, return to display mode
+  const box = document.getElementById('settingsSaved');
+  box.style.display = 'block';
+  setTimeout(() => {
+    box.style.display = 'none';
+    cancelEditMode();
+  }, 1000);
+}
+
+// ── Logout ─────────────────────────────────────────────────────────────────
+function logout() {
+  localStorage.removeItem('tb_user');
+  localStorage.removeItem('tb_token');
+  window.location.href = '/login';
+}
+
+// ── Scroll ─────────────────────────────────────────────────────────────────
+function scrollToBottom() {
+  const area = document.getElementById('messagesArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ── Vote panel ─────────────────────────────────────────────────────────────
+const activeVotePanels = {}; // battleId → { el, timerInterval, myChoice }
+
+function openVotePanel(battleId, destinations, timeoutMs) {
+  const area = document.getElementById('messagesArea');
+  const el   = document.createElement('div');
+  el.className = 'vote-panel';
+  el.id        = `vote-panel-${battleId}`;
+
+  const seconds = Math.round(timeoutMs / 1000);
+  el.innerHTML = `
+    <div class="vote-header">
+      🗳️ Vote for your preferred destination!
+      <span class="vote-timer" id="vote-timer-${battleId}">${seconds}s</span>
+    </div>
+    <div class="vote-options" id="vote-options-${battleId}">
+      ${destinations.map(d => `
+        <button class="vote-btn" id="vote-btn-${battleId}-${escAttr(d)}" onclick="castVote('${battleId}','${escAttr(d)}')">
+          ✈️ ${escHtml(d)}
+        </button>
+      `).join('')}
+    </div>
+    <div class="vote-tally" id="vote-tally-${battleId}">Waiting for votes…</div>
+  `;
+
+  area.appendChild(el);
+  scrollToBottom();
+
+  // Countdown timer
+  let remaining = seconds;
+  const interval = setInterval(() => {
+    remaining--;
+    const timerEl = document.getElementById(`vote-timer-${battleId}`);
+    if (timerEl) timerEl.textContent = `${remaining}s`;
+    if (remaining <= 0) clearInterval(interval);
+  }, 1000);
+
+  activeVotePanels[battleId] = { el, timerInterval: interval, myChoice: null };
+}
+
+function castVote(battleId, choice) {
+  const panel = activeVotePanels[battleId];
+  if (!panel || panel.myChoice) return; // already voted
+  panel.myChoice = choice;
+
+  // Highlight chosen button, disable all
+  const allBtns = document.querySelectorAll(`#vote-options-${battleId} .vote-btn`);
+  allBtns.forEach(btn => {
+    btn.disabled = true;
+    if (btn.id === `vote-btn-${battleId}-${choice}`) btn.classList.add('voted');
+  });
+
+  socket.emit('battleVote', { battleId, choice });
+}
+
+function updateVoteTally(battleId, votes, total) {
+  const tallyEl = document.getElementById(`vote-tally-${battleId}`);
+  if (!tallyEl) return;
+  const voteCount = Object.keys(votes).length;
+  const summary = Object.entries(votes).map(([user, dest]) => `${escHtml(user)} → ${escHtml(dest)}`).join(', ');
+  tallyEl.textContent = `${voteCount}/${total} voted${summary ? ': ' + summary : ''}`;
+}
+
+function closeVotePanel(battleId) {
+  const panel = activeVotePanels[battleId];
+  if (!panel) return;
+  clearInterval(panel.timerInterval);
+  const timerEl = document.getElementById(`vote-timer-${battleId}`);
+  if (timerEl) timerEl.textContent = 'Done';
+  // Disable all buttons
+  document.querySelectorAll(`#vote-options-${battleId} .vote-btn`).forEach(btn => btn.disabled = true);
+  delete activeVotePanels[battleId];
+}
+
+// ── Render recently viewed cities ─────────────────────────────────────────
+function renderRecentCities(cities) {
+  const list = document.getElementById('recentCitiesList');
+  if (!cities || !cities.length) {
+    list.innerHTML = '<div class="lb-empty" style="font-size:0.78rem">No destinations viewed yet</div>';
+    return;
+  }
+  list.innerHTML = cities.map(city => {
+    // Support both old string format and new object format
+    const name     = typeof city === 'string' ? city : city.city;
+    const country  = typeof city === 'string' ? '' : (city.country || '');
+    const price    = typeof city === 'string' ? '—' : (city.priceFormatted || '—');
+    const duration = typeof city === 'string' ? '—' : (city.duration || '—');
+    return `
+      <div class="recent-city-card">
+        <div class="recent-city-text">
+          <div class="recent-city-name">${escHtml(name)}</div>
+          ${country ? `<div class="recent-city-country">${escHtml(country)}</div>` : ''}
+          <div class="recent-city-stats">
+            <div class="recent-city-stat">
+              <span class="recent-city-stat-label">Avg Cost</span>
+              <span class="recent-city-stat-value">${escHtml(price)}</span>
+            </div>
+            <div class="recent-city-stat">
+              <span class="recent-city-stat-label">Avg Time</span>
+              <span class="recent-city-stat-value">${escHtml(duration)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+</script>
+
+</body>
+</html>
