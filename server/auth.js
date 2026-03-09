@@ -1,27 +1,22 @@
 const { v4: uuidv4 } = require('uuid');
-
-const USERS = {
-  alice: { password: 'password' },
-  bob: { password: 'password' }
-};
-
-// token → { username, createdAt }
-const sessions = {};
+const db = require('./db');
 
 function login(username, password) {
-  const user = USERS[username.toLowerCase()];
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username.toLowerCase());
   if (!user || user.password !== password) return null;
   const token = uuidv4();
-  sessions[token] = { username: username.toLowerCase(), createdAt: Date.now() };
+  db.prepare('INSERT INTO sessions (token, username, created_at) VALUES (?, ?, ?)')
+    .run(token, user.username, Date.now());
   return token;
 }
 
 function validateToken(token) {
-  return sessions[token] || null;
+  const row = db.prepare('SELECT username FROM sessions WHERE token = ?').get(token);
+  return row ? { username: row.username } : null;
 }
 
 function getUserList() {
-  return Object.keys(USERS);
+  return db.prepare('SELECT username FROM users').all().map(r => r.username);
 }
 
 function setupAuthRoutes(app) {

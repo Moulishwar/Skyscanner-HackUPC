@@ -45,7 +45,7 @@ Planning a group trip is painful. Someone wants Bangkok, someone wants Lisbon, a
 | AI judge | OpenRouter (configurable model via `.env`) |
 | HTTP client | Axios |
 | Frontend | Vanilla HTML / CSS / JavaScript |
-| Data | In-memory (no database) |
+| Data | SQLite (better-sqlite3) |
 
 ---
 
@@ -73,7 +73,7 @@ Create a `.env` file in the project root:
 AMADEUS_CLIENT_ID=your_amadeus_client_id
 AMADEUS_CLIENT_SECRET=your_amadeus_client_secret
 OPENROUTER_API_KEY=your_openrouter_api_key
-MODEL=meta-llama/llama-3.3-70b-instruct:free
+MODEL=your_model
 PORT=3000
 ```
 
@@ -116,6 +116,7 @@ Open [http://localhost:3000](http://localhost:3000)
 ├── server/
 │   ├── server.js           # Express + Socket.io entry point
 │   ├── auth.js             # Local session auth (alice / bob)
+│   ├── db.js               # SQLite database setup, schema and seed data
 │   ├── chat.js             # Socket event handlers
 │   ├── gameEngine.js       # Battle logic, leaderboard, flight aggregation
 │   ├── amadeusService.js   # Amadeus API integration
@@ -134,12 +135,6 @@ Flight duration and distance are factored into the AI's verdict — not just pri
 
 ---
 
-## Built By
+## Built In
 
 Made in 36 hours at **HackUPC 2025**, Barcelona — Europe's largest student hackathon.
-
----
-
-## License
-
-MIT

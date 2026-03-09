@@ -1,4 +1,7 @@
 .env
-/Ignore/*
 node_modules/
 package-lock.json
+travelbattle.db
+/Ignore/*
+travelbattle.db-shm
+travelbattle.db-wal
