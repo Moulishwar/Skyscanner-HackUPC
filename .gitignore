@@ -1,4 +1,5 @@
 .env
-/Ignore/*
 node_modules/
 package-lock.json
+travelbattle.db
+/Ignore/*

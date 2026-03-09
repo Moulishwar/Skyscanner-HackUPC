@@ -1,49 +1,55 @@
 const { searchFlights } = require('./amadeusService');
 const { judgeDestinations } = require('./llmService');
 const airportService = require('./airportService');
+const db = require('./db');
 
-// leaderboard: { username: winCount }
-const leaderboard = {};
-
-// current active challenge
-let currentChallenge = null;
-
-// Flight result cache: key = `${origin}-${iata}-${date}` → result
-const flightCache = {};
-
-// Recently viewed destinations — last 4 unique cities with flight stats
-// Each entry: { city, country, priceFormatted, duration }
-const recentCities = [];
+// ── Leaderboard ─────────────────────────────────────────────────────────────
 
 function getLeaderboard() {
-  return Object.entries(leaderboard)
-    .sort((a, b) => b[1] - a[1])
-    .map(([user, wins]) => ({ user, wins }));
+  return db.prepare('SELECT username AS user, wins FROM leaderboard ORDER BY wins DESC').all();
 }
 
 function awardWin(username) {
-  leaderboard[username] = (leaderboard[username] || 0) + 1;
+  db.prepare(`
+    INSERT INTO leaderboard (username, wins) VALUES (?, 1)
+    ON CONFLICT(username) DO UPDATE SET wins = wins + 1
+  `).run(username);
 }
 
+// ── Challenge ───────────────────────────────────────────────────────────────
+
 function setChallenge(text) {
-  currentChallenge = text;
+  db.prepare('INSERT OR REPLACE INTO challenge (id, text) VALUES (1, ?)').run(text);
 }
 
 function getChallenge() {
-  return currentChallenge;
+  const row = db.prepare('SELECT text FROM challenge WHERE id = 1').get();
+  return row ? row.text : null;
 }
 
+// ── Recently Viewed ─────────────────────────────────────────────────────────
+
 function getRecentCities() {
-  return [...recentCities];
+  return db.prepare(
+    'SELECT city, country, price AS priceFormatted, duration FROM recent_cities ORDER BY viewed_at DESC LIMIT 4'
+  ).all();
 }
 
 function addRecentCity(entry) {
-  // entry: { city, country, priceFormatted, duration }
-  const norm = entry.city.trim().toLowerCase();
-  const idx  = recentCities.findIndex(r => r.city.trim().toLowerCase() === norm);
-  if (idx !== -1) recentCities.splice(idx, 1);
-  recentCities.unshift(entry);
-  if (recentCities.length > 4) recentCities.pop();
+  db.prepare(`
+    INSERT INTO recent_cities (city, country, price, duration, viewed_at) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(city) DO UPDATE SET
+      country   = excluded.country,
+      price     = excluded.price,
+      duration  = excluded.duration,
+      viewed_at = excluded.viewed_at
+  `).run(
+    entry.city,
+    entry.country    || '',
+    entry.priceFormatted || '—',
+    entry.duration   || '—',
+    Date.now()
+  );
 }
 
 // Parse /battle command: "/battle Paris vs Tokyo vs Barcelona"
@@ -79,9 +85,11 @@ let _amadeusCallCount = 0;
 
 async function rateLimitedSearch(origin, iata, date) {
   const key = `${origin}-${iata}-${date}`;
-  if (flightCache[key]) {
+
+  const cached = db.prepare('SELECT result FROM flight_cache WHERE cache_key = ?').get(key);
+  if (cached) {
     console.log(`[gameEngine] Cache hit: ${key}`);
-    return flightCache[key];
+    return JSON.parse(cached.result);
   }
 
   _amadeusCallCount++;
@@ -92,7 +100,8 @@ async function rateLimitedSearch(origin, iata, date) {
 
   const result = await searchFlights(origin, iata, date);
   if (result) {
-    flightCache[key] = result;
+    db.prepare('INSERT OR REPLACE INTO flight_cache (cache_key, result, cached_at) VALUES (?, ?, ?)')
+      .run(key, JSON.stringify(result), Date.now());
     console.log(`[gameEngine] Cached: ${key}`);
   }
   return result;
