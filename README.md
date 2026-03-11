@@ -49,14 +49,6 @@ Planning a group trip is painful. Someone wants Bangkok, someone wants Lisbon, a
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- An [Amadeus Developer](https://developers.amadeus.com/) account (free tier works)
-- An [OpenRouter](https://openrouter.ai/) API key (free models available)
-
 ### Installation
 
 ```bash
@@ -70,6 +62,7 @@ npm install
 Create a `.env` file in the project root:
 
 ```ini
+# This was orginally built using skyscanner API key provided during the event
 AMADEUS_CLIENT_ID=your_amadeus_client_id
 AMADEUS_CLIENT_SECRET=your_amadeus_client_secret
 OPENROUTER_API_KEY=your_openrouter_api_key
