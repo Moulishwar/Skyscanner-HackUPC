@@ -70,8 +70,6 @@ MODEL=your_model
 PORT=3000
 ```
 
-> **Recommended free models:** `arcee-ai/trinity-large-preview:free`, `meta-llama/llama-3.3-70b-instruct:free`
-
 ### Run
 
 ```bash
